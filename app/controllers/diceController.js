@@ -9,7 +9,7 @@ const voucherHistoryModel = require('../models/voucherHistoryModel');
 const prizeHistoryModel = require('../models/prizeHistoryModel');
 
 //get all
-// const getDice = async (req, res) => {
+// const getDice = async (req, res) => { 
 //     let body = req.body; //B1 thu thập
 
 //     //Find User By UserName
