@@ -8,97 +8,22 @@ const diceHistoryModel = require('../models/diceHistoryModel');
 const voucherHistoryModel = require('../models/voucherHistoryModel');
 const prizeHistoryModel = require('../models/prizeHistoryModel');
 
-//get all
-// const getDice = async (req, res) => { 
-//     let body = req.body; //B1 thu thập
-
-//     //Find User By UserName
-//     let userObj = null;
-//     let newDiceHistory = null;
-//     let newVoucherHistory = null;
-//     let top3DiceHistories = null;
-//     var resData = { "voucher": null, "dice": 0, "prize": null };
-
-//     await userModel.findOne({ username: body.username })
-//         .then(function (obj) {
-//             userObj = obj;
-//         }
-//         ).catch(function (err) {
-//             console.log(err);
-//         }
-//         );
-
-
-//     try {
-
-//         //có đc user.UserId, tạo diceHistory
-//         let diceHistory = new diceHistoryModel();
-//         diceHistory._id = new mongoose.Types.ObjectId();
-//         diceHistory.username = userObj.username;
-//         diceHistory.dice = Math.floor(6 * Math.random()) + 1;
-//         diceHistory.createdAt = Date.now();
-//         diceHistory.updatedAt = Date.now();
+const get3CurrentDice = async (req, res) => {
+    try {
+        let allDiceHistories = null;
+        let top3DiceHistories = {top1:[], top3:[]};
+        let usernamex = req.params.username.trim();
+        allDiceHistories = await diceHistoryModel.find({ "username": usernamex }).sort({ createdAt: "desc" }).exec();
+        top3DiceHistories.top1.push(allDiceHistories[0]);
+        top3DiceHistories.top3.push(allDiceHistories[0]);
+        top3DiceHistories.top3.push(allDiceHistories[1]);
+        top3DiceHistories.top3.push(allDiceHistories[2]);
         
-//         // diceHistory.dice = 4;
-
-
-//         newDiceHistory = await diceHistory.save();
-
-
-//         resData.dice = newDiceHistory.dice
-
-//         //Nếu dice > 3 thì lấy random voucher tu db 
-//         if (diceHistory.dice > 3) {
-
-//             //lấy tất cả vouchers từ mongdb lên
-//             let vouchers = await voucherModel.find();  //lấy tất cả vouchers hiện có trong db
-
-//             let randomIndex = randomInt(0, vouchers.length - 1); //lấy ngẫu nhiên 1 voucher theo index (giá trị randomIndex sẽ từ  0 --> length-1)
-//             resData.voucher = vouchers[randomIndex];
-//             let voucherObj = vouchers[randomIndex];
-
-//             //tạo voucherHistory
-//             let voucherHistory = new voucherHistoryModel();
-//             voucherHistory._id = new mongoose.Types.ObjectId();
-//             voucherHistory.user = mongoose.Types.ObjectId(userObj._id);
-//             voucherHistory.voucher = mongoose.Types.ObjectId(voucherObj._id);
-
-//             newVoucherHistory = await voucherHistory.save();
-
-//             //lấy tất cả historydice của user từ mongdb lên
-//             top3DiceHistories = await diceHistoryModel.find({ user: userObj._id }).sort({ createdAt: "desc" }).exec();
-
-//             // console.table(top3DiceHistories);
-//             if (top3DiceHistories[0].dice > 3 && top3DiceHistories[1].dice > 3 && top3DiceHistories[2].dice > 3) {
-//                 //lấy tất cả prize từ mongdb lên
-//                 let prizes = await prizeModel.find();  //lấy tất cả prizes hiện có trong db
-
-//                 let randomIndexp = randomInt(0, prizes.length - 1); //lấy ngẫu nhiên 1 prize theo index (giá trị randomIndexp sẽ từ  0 --> length-1)
-//                 resData.prize = prizes[randomIndexp].name;
-//                 let prizeObj = prizes[randomIndexp];
-
-//                 //tạo prizeHistory
-//                 let prizeHistory = new prizeHistoryModel();
-//                 prizeHistory._id = new mongoose.Types.ObjectId();
-//                 prizeHistory.user = mongoose.Types.ObjectId(userObj._id);
-//                 prizeHistory.prize = mongoose.Types.ObjectId(prizeObj._id);
-
-//                 newPrizeHistory = await prizeHistory.save();
-//             }
-
-
-//         }
-//     }
-//     catch (err) {
-
-//         console.log(err);
-//         res.json(err);
-//     }
-
-
-//     res.json(resData);
-
-// };
+        return res.json(top3DiceHistories);
+    } catch (error) {
+        return res.status(500).json({ message: `Lỗi không thể lấy dữ liệu: ${error.message}` });
+    }
+}
 const getDice = async (req, res) => {
     let body = req.body;
     let userObj = null;
@@ -108,7 +33,7 @@ const getDice = async (req, res) => {
     var resData = { "voucher": null, "discount": 0, "dice": 0, "prize": null };
 
     try {
-        userObj = await userModel.findOne({"username": body.username}).exec();
+        userObj = await userModel.findOne({ "username": body.username }).exec();
         let diceHistory = new diceHistoryModel();
         diceHistory._id = new mongoose.Types.ObjectId();
         diceHistory.username = userObj.username;
@@ -125,12 +50,12 @@ const getDice = async (req, res) => {
 
         if (diceHistory.dice > 3) {
 
-        //lấy tất cả vouchers từ mongdb lên
-        let vouchers = await voucherModel.find();  //lấy tất cả vouchers hiện có trong db
+            //lấy tất cả vouchers từ mongdb lên
+            let vouchers = await voucherModel.find();  //lấy tất cả vouchers hiện có trong db
 
-        let randomIndex = randomInt(0, vouchers.length - 1); //lấy ngẫu nhiên 1 voucher theo index (giá trị randomIndex sẽ từ  0 --> length-1)
-        resData.voucher = vouchers[randomIndex].code;
-        resData.discount = vouchers[randomIndex].discount;
+            let randomIndex = randomInt(0, vouchers.length - 1); //lấy ngẫu nhiên 1 voucher theo index (giá trị randomIndex sẽ từ  0 --> length-1)
+            resData.voucher = vouchers[randomIndex].code;
+            resData.discount = vouchers[randomIndex].discount;
             //tạo voucherHistory
             let voucherObj = vouchers[randomIndex];
             let voucherHistory = new voucherHistoryModel();
@@ -138,20 +63,20 @@ const getDice = async (req, res) => {
             voucherHistory.username = userObj.username;
             voucherHistory.voucher = voucherObj.code;
 
-            newVoucherHistory =  voucherHistory.save();
+            newVoucherHistory = voucherHistory.save();
 
-        //lấy tất cả historydice của user từ mongdb lên
+            //lấy tất cả historydice của user từ mongdb lên
             top3DiceHistories = await diceHistoryModel.find({ "username": userObj.username }).sort({ createdAt: "desc" }).exec();
 
             // console.table(top3DiceHistories);
             if (top3DiceHistories[0].dice > 3 && top3DiceHistories[1].dice > 3 && top3DiceHistories[2].dice > 3) {
-        //         //lấy tất cả prize từ mongdb lên
+                //         //lấy tất cả prize từ mongdb lên
                 let prizes = await prizeModel.find();  //lấy tất cả prizes hiện có trong db
 
                 let randomIndexp = randomInt(0, prizes.length - 1); //lấy ngẫu nhiên 1 prize theo index (giá trị randomIndexp sẽ từ  0 --> length-1)
                 resData.prize = prizes[randomIndexp].name;
 
-        //         //tạo prizeHistory
+                //         //tạo prizeHistory
                 let prizeObj = prizes[randomIndexp];
 
                 let prizeHistory = new prizeHistoryModel();
@@ -165,7 +90,7 @@ const getDice = async (req, res) => {
 
         }
     }
-    
+
     catch (error) {
         console.log(error);
         return res.status(500).json({
@@ -178,11 +103,11 @@ const getDice = async (req, res) => {
 };
 
 
-const getNewDice = async (req, res)=>{
+const getNewDice = async (req, res) => {
     let body = req.body;
     let usernamex = req.body.username.trim();
     let userId = (await userModel.findOne({ username: usernamex }))._id;
-    if (userId == null){
+    if (userId == null) {
         res.status(500).json({
             message: `Lỗi không thể lấy dữ liệu`
         });
@@ -193,7 +118,7 @@ const getNewDice = async (req, res)=>{
         });
     }
 
-   
+
 }
 
 function randomInt(min, max) { // min and max included 
@@ -202,81 +127,55 @@ function randomInt(min, max) { // min and max included
 
 //lấy dice history
 const getDiceHistory = async (req, res) => {
-    console.log("getDiceHistory at ",  new Date());
     try {
-      let resDiceHis = { dices: [] };
-      let usernamex = req.params.username.trim();
-    //   let user = await userModel.findOne({ username: usernamex });
-      
-    //   if (!user) {
-    //     return res.json(resDiceHis);
-    //   }
-      
-    //   let userId = user._id;
-      let allDiceHistoriesUser = await diceHistoryModel.find({ username: usernamex }).exec();
-  
-      for (var i = 0; i < allDiceHistoriesUser.length; i++) {
-        resDiceHis.dices.push(allDiceHistoriesUser[i].dice);
-      }
-  
-      return res.json(resDiceHis);
+        let resDiceHis = { dices: [] };
+        let usernamex = req.params.username.trim();
+        let allDiceHistoriesUser = await diceHistoryModel.find({ username: usernamex }).exec();
+
+        for (var i = 0; i < allDiceHistoriesUser.length; i++) {
+            resDiceHis.dices.push(allDiceHistoriesUser[i].dice);
+        }
+
+        return res.json(resDiceHis);
     } catch (error) {
-      return res.status(500).json({ message: `Lỗi không thể lấy dữ liệu: ${error.message}` });
+        return res.status(500).json({ message: `Lỗi không thể lấy dữ liệu: ${error.message}` });
     }
-  };
-  
-  
+};
 
-const getPrizeHistory = async (req,res)=>{
-    let resPrizeHis = {"prizes":[]}
-    let allPrizeHis = [];
-    let usernamex = req.query.username.trim();
-    let userId = (await userModel.findOne({ username: usernamex }))._id;
-    if (userId == null){
-        res.json(resPrizeHis);
-    }
-    AllPrizeHistoriesUser = await prizeHistoryModel.find({ user: userId });
-    if (AllPrizeHistoriesUser == []){
-        res.json(resPrizeHis);
-    }
-    for (var i = 0; i<AllPrizeHistoriesUser.length; i++){
-        allPrizeHis.push(AllPrizeHistoriesUser[i].prize);
-    }
 
-    for (var i = 0; i<allPrizeHis.length; i++){
 
-        let convertNamePrize = (await prizeModel.findOne({_id:allPrizeHis[i]}));
-        console.log(convertNamePrize);
-        resPrizeHis.prizes.push(convertNamePrize.name);
+const getPrizeHistory = async (req, res) => {
+    try {
+        let resPrizeHis = { prizes: [] }
+        let usernamex = req.params.username.trim();
+        let allPrizeHistoriesUser = await prizeHistoryModel.find({ username: usernamex }).exec();
+
+        for (var i = 0; i < allPrizeHistoriesUser.length; i++) {
+            resPrizeHis.prizes.push(allPrizeHistoriesUser[i].prize);
+        }
+
+        return res.json(resPrizeHis);
+    } catch (error) {
+        return res.status(500).json({ message: `Lỗi không thể lấy dữ liệu: ${error.message}` });
     }
-
-    res.json(resPrizeHis);
 }
 
-const getVoucherHistory = async (req,res)=>{
-    let resVoucherHis = {"vouchers":[]}
-    let allVoucherHis = [];
-    let usernamex = req.query.username.trim();
-    let userId = (await userModel.findOne({ username: usernamex }))._id;
-    if (userId == null){
-        res.json(resVoucherHis);
-    }
-    AllVoucherHistoriesUser = await voucherHistoryModel.find({ user: userId });
-    if (AllVoucherHistoriesUser == []){
-        res.json(resVoucherHis);
-    }
-    for (var i = 0; i<AllVoucherHistoriesUser.length; i++){
-        allVoucherHis.push(AllVoucherHistoriesUser[i].voucher);
-    }
+const getVoucherHistory = async (req, res) => {
+    try {
+        let resVoucherHis = { vouchers: [] }
+        let usernamex = req.params.username.trim();
+        let allVoucherHistoriesUser = await voucherHistoryModel.find({ username: usernamex }).exec();
 
-    for (var i = 0; i<allVoucherHis.length; i++){
 
-        let convertVoucher = (await voucherModel.findOne({_id:allVoucherHis[i]}));
-        console.log(convertVoucher);
-        resVoucherHis.vouchers.push(convertVoucher);
+        for (var i = 0; i < allVoucherHistoriesUser.length; i++) {
+            resVoucherHis.vouchers.push(allVoucherHistoriesUser[i].voucher);
+        }
+
+        return res.json(resVoucherHis);
+    } catch (error) {
+        return res.status(500).json({ message: `Lỗi không thể lấy dữ liệu: ${error.message}` });
     }
-
-    res.json(resVoucherHis);
 }
+
 //export hàm thanh modeule 
-module.exports = { getDice, getNewDice, getDiceHistory, getPrizeHistory, getVoucherHistory }
+module.exports = { getDice, get3CurrentDice, getNewDice, getDiceHistory, getPrizeHistory, getVoucherHistory }
